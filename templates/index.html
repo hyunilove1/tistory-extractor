@@ -447,24 +447,18 @@
 <body>
 
 <!-- 
-    새로 추가된 내비게이션 바 HTML
-    (container의 바깥, body의 바로 아래에 위치)
+    ★ 여기가 내비게이션 바 HTML 입니다. ★
 -->
 <nav class="main-nav">
     <ul>
         <li><a href="/">HOME</a></li>
-        <!-- 
-            현재 페이지('티스토리 인기글')에 active 클래스를 추가하여
-            하얗게 활성화된 것처럼 보이게 합니다.
-        -->
         <li><a href="/" class="active">티스토리 인기글</a></li>
-        <li><a href="/scanner">키워드 스캐너</a></li> <!-- 링크 수정 -->
+        <li><a href="/scanner">키워드 스캐너</a></li> <!-- 링크 수정됨 -->
     </ul>
 </nav>
 
 <!-- 
     기존 컨테이너 HTML
-    (내비게이션 바 아래로 이동)
 -->
 <div class="container">
     <h1>티스토리 <span class="highlight">인기글</span> 추출기</h1>
@@ -496,7 +490,7 @@
 </div>
 
 <!-- 
-    JavaScript (동작) 코드는 변경사항 없습니다.
+    JavaScript (동작) 코드
 -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -661,7 +655,7 @@
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;',
-                    "'": '&#x27;' // ' -> &#x27; 로 수정 (보안 및 호환성)
+                    "'": '&#x27;'
                 }[match];
             });
         }
