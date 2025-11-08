@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스캔 결과 - 키워드 스캐너</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; padding: 20px; background-color: #f4f7f6; }
+        h1 { color: #333; }
+        h2 { color: #444; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-top: 30px; }
+        .container { 
+            width: 90%; 
+            max-width: 1400px; 
+            margin: 0 auto; background-color: #fff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+        }
+        
+        nav { 
+            background: #eee; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+        }
+        nav a { 
+            font-weight: bold; 
+            margin-right: 25px; 
+            text-decoration: none; 
+            color: #555;
+            font-size: 1.1em;
+        }
+        nav a.active { color: #007bff; }
+        nav a:hover { text-decoration: underline; }
+
+        /* --- 결과 리스트 스타일 (수정됨) --- */
+        .post-item {
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            /* (10단계) 부드러운 효과를 위한 transition */
+            transition: all 0.3s ease;
+        }
+        .post-item-content {
+            flex: 1; /* 제목+메타가 왼쪽 공간을 다 차지하도록 */
+            min-width: 0; /* (중요) 제목이 너무 길어도 줄바꿈되게 */
+        }
+        .post-item h3 {
+            margin: 0;
+            font-size: 1em;
+            /* (10단계) 제목이 너무 길면 ...으로 자르기 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .post-item h3 a { color: #007bff; text-decoration: none; }
+        .post-item h3 a:hover { text-decoration: underline; }
+        
+        .post-item .meta {
+            font-size: 0.85em;
+            color: #555;
+            margin-top: 4px; /* (10단계) 1줄 배치가 아니므로, 제목과 간격 추가 */
+        }
+        .post-item .keyword {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .no-result { color: #777; font-style: italic; }
+
+        /* --- 10단계: '읽음' 처리 버튼 스타일 --- */
+        .read-action {
+            flex-shrink: 0; /* 버튼이 찌그러지지 않게 */
+            margin-left: 15px; /* 왼쪽 컨텐츠와 간격 */
+        }
+        .btn-read {
+            background: none;
+            border: 1px solid #007bff;
+            color: #007bff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .btn-read:hover { background-color: #e6f2ff; }
+
+        /* --- 10단계: '읽은' 항목 스타일 --- */
+        .post-item.read {
+            background-color: #f0f0f0; /* 배경색 회색으로 */
+            opacity: 0.6; /* 흐릿하게 */
+        }
+        .post-item.read h3 a {
+            color: #555; /* 제목 색도 흐리게 */
+        }
+        /* (10단계) '읽은' 항목에서는 [읽음] 버튼 숨기기 */
+        .post-item.read .read-action {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/" class="active">🚀 스캔 결과 보기</a>
+            <a href="/manage">⚙️ 블로그/키워드 관리</a>
+        </nav>
+
+        <h1>🚀 초고속 키워드 스캐너</h1>
+
+        <h2>🔥 키워드 발견 최신 글 목록</h2>
+        
+        {% for post in results %}
+            <div class="post-item {% if post.is_read %}read{% endif %}">
+                
+                <div class="post-item-content">
+                    <h3>
+                        <a href="{{ post.link }}" target="_blank" title="{{ post.title }}">
+                            {{ post.title }} </a>
+                    </h3>
+                    <p class="meta">
+                        <strong>블로그:</strong> {{ post.blog_name }} | 
+                        <span class="keyword">발견된 키워드: {{ post.keyword }}</span>
+                    </p>
+                </div>
+
+                <div class="read-action">
+                    <form action="/mark_read" method="POST" style="margin: 0;">
+                        <input type="hidden" name="post_link" value="{{ post.link }}">
+                        <button type="submit" class="btn-read">[ 읽음 ]</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <p class="no-result">최신 글에서 발견된 관심 키워드가 없습니다.</p>
+        {% endfor %}
+
+    </div>
+</body>
+</html>
