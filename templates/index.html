@@ -1,1 +1,580 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>티스토리 인기글 추출기 - 다중 블로그 지원</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s;
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea::placeholder {
+            color: #999;
+            line-height: 1.5;
+        }
+
+        .extract-btn {
+            width: 100%;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .extract-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .extract-btn:active {
+            transform: translateY(0);
+        }
+
+        .extract-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .example {
+            text-align: center;
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .example code {
+            background: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-info {
+            font-size: 0.95em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .blog-results {
+            display: grid;
+            gap: 20px;
+        }
+
+        .blog-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .blog-card:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .blog-card.error {
+            border-color: #fcc;
+            background: #fff5f5;
+        }
+
+        .blog-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .blog-card.error .blog-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .blog-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blog-url-display {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-top: 3px;
+        }
+
+        .blog-count {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .blog-card.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .blog-content {
+            max-height: 500px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .blog-card.collapsed .blog-content {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .error-message {
+            padding: 20px;
+            color: #c33;
+            text-align: center;
+        }
+
+        .post-item {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .post-item:last-child {
+            border-bottom: none;
+        }
+
+        .post-item:hover {
+            background: #f8f9ff;
+        }
+
+        .post-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 0.85em;
+        }
+
+        .post-title {
+            font-size: 1em;
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .post-title:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .post-url {
+            display: block;
+            margin-top: 6px;
+            margin-left: 40px;
+            color: #999;
+            font-size: 0.8em;
+            word-break: break-all;
+        }
+
+        .blog-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .blog-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .blog-content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .blog-content::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .summary-stats {
+                gap: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 티스토리 인기글 추출기</h1>
+        <p class="subtitle">
+            <span class="highlight">여러 블로그</span>의 인기글을 <span class="highlight">한번에</span> 확인하세요!
+        </p>
+
+        <div class="input-group">
+            <textarea 
+                id="blogUrls" 
+                placeholder="티스토리 블로그 주소를 입력하세요 (여러 개 가능)
+
+예시:
+example1.tistory.com
+example2.tistory.com
+https://example3.tistory.com"
+            ></textarea>
+        </div>
+
+        <button onclick="extractPosts()" id="extractBtn" class="extract-btn">
+            🔍 인기글 추출하기
+        </button>
+
+        <div class="example">
+            💡 <strong>여러 블로그를 한번에 조회하세요!</strong><br>
+            한 줄에 하나씩 입력하거나, 쉼표(,)로 구분해서 입력하세요.<br>
+            예: <code>blog1.tistory.com</code>, <code>blog2.tistory.com</code>, <code>blog3.tistory.com</code>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p><strong>인기글을 추출하는 중입니다...</strong></p>
+            <p class="progress-info" id="progressInfo"></p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="summary">
+                <h2>🎉 추출 완료!</h2>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalBlogs">0</div>
+                        <div class="stat-label">조회한 블로그</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalPosts">0</div>
+                        <div class="stat-label">전체 인기글</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="blog-results" id="blogResults"></div>
+        </div>
+    </div>
+
+    <script>
+        async function extractPosts() {
+            const blogUrls = document.getElementById('blogUrls').value.trim();
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
+            const extractBtn = document.getElementById('extractBtn');
+
+            // 초기화
+            error.classList.remove('show');
+            results.classList.remove('show');
+
+            if (!blogUrls) {
+                showError('블로그 주소를 입력해주세요.');
+                return;
+            }
+
+            // URL 개수 확인
+            const urlCount = blogUrls.split(/[\n,]/).filter(u => u.trim()).length;
+            document.getElementById('progressInfo').textContent = `${urlCount}개의 블로그를 분석 중...`;
+
+            // 로딩 시작
+            loading.classList.add('show');
+            extractBtn.disabled = true;
+
+            try {
+                const response = await fetch('/extract', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ blog_urls: blogUrls })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.results);
+                } else {
+                    showError(data.error);
+                }
+            } catch (err) {
+                showError('서버와 통신 중 오류가 발생했습니다: ' + err.message);
+            } finally {
+                loading.classList.remove('show');
+                extractBtn.disabled = false;
+            }
+        }
+
+        function displayResults(blogResults) {
+            const results = document.getElementById('results');
+            const blogResultsContainer = document.getElementById('blogResults');
+            const totalBlogsEl = document.getElementById('totalBlogs');
+            const totalPostsEl = document.getElementById('totalPosts');
+
+            // 통계 계산
+            const totalBlogs = blogResults.length;
+            const totalPosts = blogResults.reduce((sum, blog) => sum + (blog.count || 0), 0);
+
+            totalBlogsEl.textContent = totalBlogs;
+            totalPostsEl.textContent = totalPosts;
+
+            // 각 블로그 결과 표시
+            blogResultsContainer.innerHTML = blogResults.map((blog, blogIndex) => {
+                const blogName = extractBlogName(blog.blog_url);
+                
+                if (!blog.success) {
+                    return `
+                        <div class="blog-card error">
+                            <div class="blog-header">
+                                <div class="blog-name">
+                                    ❌ ${blogName}
+                                    <div class="blog-url-display">${blog.blog_url}</div>
+                                </div>
+                            </div>
+                            <div class="error-message">
+                                ${blog.error}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="blog-card" id="blog-${blogIndex}">
+                        <div class="blog-header" onclick="toggleBlog(${blogIndex})">
+                            <div class="blog-name">
+                                <span class="toggle-icon">▼</span>
+                                <div>
+                                    ✅ ${blogName}
+                                    <div class="blog-url-display">${blog.blog_url}</div>
+                                </div>
+                            </div>
+                            <span class="blog-count">${blog.count}개</span>
+                        </div>
+                        <div class="blog-content">
+                            ${blog.posts.map((post, index) => `
+                                <div class="post-item">
+                                    <span class="post-number">${index + 1}</span>
+                                    <a href="${post.url}" target="_blank" class="post-title">${escapeHtml(post.title)}</a>
+                                    <span class="post-url">${post.url}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            results.classList.add('show');
+        }
+
+        function toggleBlog(index) {
+            const blogCard = document.getElementById(`blog-${index}`);
+            blogCard.classList.toggle('collapsed');
+        }
+
+        function extractBlogName(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.hostname.replace('.tistory.com', '');
+            } catch {
+                return url;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.add('show');
+        }
+
+        // Ctrl+Enter로 추출 실행
+        document.getElementById('blogUrls').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                extractPosts();
+            }
+        });
+    </script>
+</body>
+</html>
